@@ -9,29 +9,32 @@
 #include <asm/irq.h>
 #include <asm/io.h>
 #include <asm/hardware.h>
+#include <linux/time.h>
 
 static struct class *ultrasonic_class;
 static struct class_device *ultrasonic_class_device;
-static char gCount=1;
 static volatile int ev_press = 0;
 static wait_queue_head_t buttons_queue;
 static irqreturn_t buttons_handler(int irq, void *dev_id)
 {
 	wake_up_interruptible(&buttons_queue);
 	ev_press=1;
-	gCount++;
 	return IRQ_HANDLED;
 }
 
 static ssize_t ultrasonicdrv_read(struct file *file, char __user *buf, size_t count, loff_t *ppos)
 {
-	char key_val[1];
-	key_val[0]=gCount;
+	unsigned long range=0;
+	struct timeval Stime,Ftime;
+
+	do_gettimeofday(&Stime);
 	wait_event_interruptible(buttons_queue,ev_press);
+	do_gettimeofday(&Ftime);
+	range=(Ftime.tv_sec-Stime.tv_sec)*340*100+(Ftime.tv_usec-Stime.tv_usec)*340/10000;
 	ev_press=0;
-	if(copy_to_user(buf,key_val,sizeof(key_val)))
+	if(copy_to_user(buf,&range,sizeof(range)))
 		return -1;
-	return sizeof(key_val);
+	return sizeof(range);
 }
 
 static int ultrasonicdrv_open(struct inode *inode, struct file *file)
