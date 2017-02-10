@@ -24,7 +24,7 @@ static irqreturn_t buttons_handler(int irq, void *dev_id)
 
 static ssize_t ultrasonicdrv_read(struct file *file, char __user *buf, size_t count, loff_t *ppos)
 {
-	unsigned long range=0;
+	unsigned int range=0;
 	struct timeval Stime,Ftime;
 
 	do_gettimeofday(&Stime);
